@@ -1,185 +1,133 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>르샤틀리에의 원리 미션형 시뮬레이터</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- 구글 폰트: Outfit & Noto Sans KR -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인체 혈액 pH 탄산수소염 완충계 시뮬레이션</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js 그래프 라이브러리 로드 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="app-container">
-    <!-- 사이드바: 미션 안내 및 이론 설명 -->
-    <aside class="sidebar">
-      <div class="logo-area">
-        <span class="icon-wrap"><i data-lucide="flask-conical"></i></span>
-        <h1>ChemEquil <span>v1.0</span></h1>
-      </div>
-      
-      <!-- 미션 상태 패널 -->
-      <section class="panel mission-panel">
-        <div class="panel-header">
-          <i data-lucide="award" class="accent-icon"></i>
-          <h2>미션 제어판</h2>
-        </div>
-        <div class="mission-status">
-          <div class="mission-selector">
-            <button class="mission-btn active" id="btn-m1" onclick="switchMission(1)">미션 1</button>
-            <button class="mission-btn" id="btn-m2" onclick="switchMission(2)">미션 2</button>
-            <button class="mission-btn" id="btn-m3" onclick="switchMission(3)">미션 3</button>
-          </div>
-          <div class="mission-body">
-            <h3 id="mission-title">미션 1: 반응 물질 주입하기</h3>
-            <p id="mission-desc">용기 안에 Fe³⁺나 SCN⁻ 반응물을 추가하여 적갈색의 생성물 [Fe(SCN)]²⁺이 18개 이상 생성되도록 하고, 안정한 평형 상태를 도달시키세요.</p>
-            <div class="progress-container">
-              <div class="progress-bar-label">
-                <span>현재 진행도</span>
-                <span id="mission-progress-text">0 / 18</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" id="mission-progress-fill" style="width: 0%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <!-- 화학 정보 카드 -->
-      <section class="panel chemical-info-panel">
-        <div class="panel-header">
-          <i data-lucide="info"></i>
-          <h2>화학 평형 반응식</h2>
-        </div>
-        <div class="reaction-formula">
-          <div class="formula-line">
-            <span class="chem Fe">Fe³⁺ <small>(노란/황갈색)</small></span>
-            <span class="plus">+</span>
-            <span class="chem SCN">SCN⁻ <small>(무색)</small></span>
-          </div>
-          <div class="arrow-line">
-            <span class="arrow-forward">정반응 (v_f) ➔</span>
-            <span class="arrow-backward">Ⱉ 역반응 (v_r)</span>
-          </div>
-          <div class="formula-line product-line">
-            <span class="chem FeSCN">[Fe(SCN)]²⁺ <small>(적갈색)</small></span>
-          </div>
-        </div>
-        <div class="dynamic-equilibrium-status">
-          <div class="rate-status">
-            <div class="rate-label">정반응 속도 (v_f)</div>
-            <div class="rate-val" id="vf-val">0.00</div>
-          </div>
-          <div class="rate-indicator-glow" id="rate-glow"></div>
-          <div class="rate-status">
-            <div class="rate-label">역반응 속도 (v_r)</div>
-            <div class="rate-val" id="vr-val">0.00</div>
-          </div>
-        </div>
-      </section>
-    </aside>
+    <header>
+        <h1>혈액 pH 탄산수소염 완충계 시뮬레이터</h1>
+        <p>폐(호흡)와 신장(배설)이 어떻게 협력하여 혈액의 pH를 일정하게 유지하는지 알아보세요</p>
+    </header>
 
-    <!-- 메인 대시보드 영역 -->
-    <main class="dashboard">
-      <header class="top-header">
-        <div class="dashboard-title">
-          <h2>르샤틀리에의 원리 실시간 탐구</h2>
-          <p>농도 교란을 통해 계가 스스로 평형을 어떻게 찾아가는지 미시/거시 관점에서 실시간으로 관찰합니다.</p>
-        </div>
-        <div class="header-controls">
-          <button class="btn btn-secondary" onclick="resetSimulator()">
-            <i data-lucide="rotate-ccw"></i> 시뮬레이터 초기화
-          </button>
-        </div>
-      </header>
+    <div class="app-container">
+        
+        <!-- 왼쪽: 제어 패널 -->
+        <aside class="glass-panel" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- 환자 상태 모니터 -->
+            <div id="status-panel" class="status-monitor">
+                <span class="status-label">혈액 pH 수치</span>
+                <div id="ph-display" class="status-value">7.40</div>
+                <div id="status-badge" class="status-badge">정상</div>
+            </div>
 
-      <!-- 중앙 2분할 콘텐츠 (시뮬레이터 & 그래프) -->
-      <div class="grid-content">
-        <!-- 비커 시뮬레이터 컨테이너 -->
-        <div class="card beaker-card">
-          <div class="card-header">
-            <h3><i data-lucide="beaker"></i> 미시 세계 (실시간 입자 충돌 및 결합)</h3>
-            <span class="badge" id="equilibrium-status-badge">평형 도달 대기중</span>
-          </div>
-          <div class="canvas-container">
-            <canvas id="beaker-canvas"></canvas>
-            <div class="solution-color-overlay" id="solution-overlay"></div>
-          </div>
-          <!-- 조작 컨트롤러 -->
-          <div class="beaker-controls">
-            <div class="control-group">
-              <label>반응물 주입</label>
-              <div class="btn-group">
-                <button class="btn btn-primary" onclick="injectParticle('Fe')">
-                  <i data-lucide="plus"></i> Fe³⁺ 주입
-                </button>
-                <button class="btn btn-primary" onclick="injectParticle('SCN')">
-                  <i data-lucide="plus"></i> SCN⁻ 주입
-                </button>
-              </div>
-            </div>
-            <div class="control-group">
-              <label>생성물 제거 (평형 방해)</label>
-              <button class="btn btn-danger" onclick="removeProduct()">
-                <i data-lucide="minus"></i> [Fe(SCN)]²⁺ 제거
-              </button>
-            </div>
-          </div>
-        </div>
+            <!-- 조절기 (독립변인) -->
+            <div>
+                <h3 class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                    완충계 조절 변수
+                </h3>
 
-        <!-- 실시간 데이터 그래프 컨테이너 -->
-        <div class="card graph-card">
-          <div class="card-header">
-            <h3><i data-lucide="trending-up"></i> 거시 세계 (시간에 따른 농도 추이)</h3>
-            <div class="legend">
-              <span class="legend-item"><span class="color-dot fe-dot"></span> Fe³⁺</span>
-              <span class="legend-item"><span class="color-dot scn-dot"></span> SCN⁻</span>
-              <span class="legend-item"><span class="color-dot fescn-dot"></span> [Fe(SCN)]²⁺</span>
-            </div>
-          </div>
-          <div class="graph-container">
-            <canvas id="graph-canvas"></canvas>
-          </div>
-          <!-- 실시간 스태츠 수치화 -->
-          <div class="stats-grid">
-            <div class="stat-box">
-              <span class="stat-label">Fe³⁺ 개수</span>
-              <span class="stat-value" id="count-fe">0</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-label">SCN⁻ 개수</span>
-              <span class="stat-value" id="count-scn">0</span>
-            </div>
-            <div class="stat-box">
-              <span class="stat-label">[Fe(SCN)]²⁺ 개수</span>
-              <span class="stat-value" id="count-fescn">0</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
+                <!-- 폐 슬라이더 -->
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>폐 (호흡을 통한 CO₂ 배출량)</span>
+                        <span id="pco2-label" class="control-value">40.0 mmHg</span>
+                    </div>
+                    <input type="range" id="pco2-slider" min="15" max="80" step="0.5" value="40">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
+                        <span>과호흡 (CO₂ 감소)</span>
+                        <span>호흡 저하 (CO₂ 축적)</span>
+                    </div>
+                </div>
 
-  <!-- 성공 축하 오버레이 모달 -->
-  <div class="modal-overlay" id="success-modal">
-    <div class="modal-content">
-      <div class="success-icon-badge">
-        <i data-lucide="party-popper"></i>
-      </div>
-      <h2>미션 성공!</h2>
-      <p id="modal-success-desc">훌륭합니다! 르샤틀리에의 농도 법칙 평형 현상을 성공적으로 발견하셨습니다.</p>
-      <button class="btn btn-success" onclick="closeModal()">다음 단계로 진행</button>
+                <!-- 신장 슬라이더 -->
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>신장 (HCO₃⁻ 이온 재흡수량)</span>
+                        <span id="hco3-label" class="control-value">24.0 mEq/L</span>
+                    </div>
+                    <input type="range" id="hco3-slider" min="12" max="40" step="0.2" value="24">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
+                        <span>배설 증가 (염기 감소)</span>
+                        <span>재흡수 증가 (염기 증가)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 임상 프리셋 -->
+            <div>
+                <h3 class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    임상 상황 프리셋
+                </h3>
+                <div class="presets-grid">
+                    <button class="btn active" onclick="loadPreset('normal')">정상 상태</button>
+                    <button class="btn" onclick="loadPreset('hyperventilation')">과호흡 증후군</button>
+                    <button class="btn" onclick="loadPreset('obstruction')">기도 폐쇄 (질식)</button>
+                    <button class="btn" onclick="loadPreset('acidosis')">대사성 케토산증</button>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- 오른쪽: 모니터링 대시보드 -->
+        <main class="dashboard-grid">
+            
+            <!-- 미시적 분자 캔버스 -->
+            <div class="glass-panel">
+                <h3 class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                    혈관 내 미시적 화학 반응 입자 활동
+                </h3>
+                <div class="canvas-container">
+                    <canvas id="particle-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- 그래프 섹션 -->
+            <div class="charts-grid">
+                <div class="glass-panel">
+                    <h3 class="panel-title">실시간 pH 변화 기록 추이</h3>
+                    <div style="height: 220px; position: relative;">
+                        <canvas id="phChart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-panel">
+                    <h3 class="panel-title">산(CO₂) vs 염기(HCO₃⁻) 비율</h3>
+                    <div style="height: 220px; position: relative;">
+                        <canvas id="ratioChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 르샤틀리에 화학 반응식 표시 -->
+            <div class="glass-panel equation-panel">
+                <div class="equation-display">
+                    <span>CO₂</span>
+                    <span>+</span>
+                    <span>H₂O</span>
+                    <span id="arrow-left" class="eq-arrow">⇌</span>
+                    <span>H₂CO₃</span>
+                    <span id="arrow-right" class="eq-arrow">⇌</span>
+                    <span>HCO₃⁻</span>
+                    <span>+</span>
+                    <span>H⁺</span>
+                </div>
+                <div id="equilibrium-text" class="eq-desc">
+                    혈액이 현재 정상적인 생리적 평형 상태를 유지하고 있습니다.
+                </div>
+            </div>
+
+        </main>
     </div>
-  </div>
 
-  <script src="app.js"></script>
-  <script>
-    // Lucide 아이콘 초기화
-    lucide.createIcons();
-  </script>
+    <script src="app.js"></script>
 </body>
 </html>
