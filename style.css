@@ -1,0 +1,662 @@
+/* ==========================================================================
+   르샤틀리에의 원리 시뮬레이터 CSS 스타일 시트
+   테마: 하이테크 다크 네온 글래스모피즘 (Glassmorphism & Neon Dark)
+   ========================================================================== */
+
+:root {
+  /* 프리미엄 컬러 팔레트 */
+  --bg-primary: #0a0b10;
+  --bg-secondary: #121420;
+  --panel-bg: rgba(22, 26, 46, 0.6);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  
+  /* 반응 성분별 고유 색상 및 광원 효과(Neon Glow) */
+  --color-fe: #e2a03f;       /* 노랑/갈색 */
+  --color-fe-glow: rgba(226, 160, 63, 0.2);
+  
+  --color-scn: #4da6ff;      /* 무색/하늘색 대리 입자 */
+  --color-scn-glow: rgba(77, 166, 255, 0.2);
+  
+  --color-fescn: #ff3344;    /* 적갈색 착이온 */
+  --color-fescn-glow: rgba(255, 51, 68, 0.3);
+  
+  /* 상태 테마 */
+  --accent: #a855f7;         /* 퍼플 (메인 브랜드컬러) */
+  --success: #10b981;        /* 그린 (성공 상태) */
+  --danger: #ef4444;         /* 레드 (제거 기능 등) */
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --font-display: 'Outfit', 'Noto Sans KR', sans-serif;
+  --font-body: 'Noto Sans KR', 'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 전체 레이아웃 컨테이너 */
+.app-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at 50% 50%, #16192b 0%, #0a0b10 100%);
+}
+
+/* ==========================================================================
+   사이드바 (Sidebar) 스타일
+   ========================================================================== */
+.sidebar {
+  width: 360px;
+  min-width: 360px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--panel-border);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-area h1 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-area h1 span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  -webkit-text-fill-color: var(--text-muted);
+  vertical-align: super;
+}
+
+.icon-wrap {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--accent);
+}
+
+/* 패널 공통 스타일 */
+.panel {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--glass-shadow);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 10px;
+}
+
+.panel-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.accent-icon {
+  color: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+/* 미션 선택 및 상태 */
+.mission-selector {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+
+.mission-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-weight: 600;
+  padding: 8px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mission-btn.active {
+  background: var(--accent);
+  color: var(--text-main);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+}
+
+.mission-body h3 {
+  font-size: 15px;
+  margin-bottom: 8px;
+  color: var(--text-main);
+}
+
+.mission-body p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.progress-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+}
+
+.progress-bar {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--accent) 0%, #6366f1 100%);
+  height: 100%;
+  width: 0%;
+  border-radius: 20px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 화학 정보 반응식 스타일 */
+.reaction-formula {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.formula-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.chem {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chem small {
+  font-size: 9px;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.chem.Fe {
+  background: rgba(226, 160, 63, 0.1);
+  border: 1px solid var(--color-fe);
+  color: var(--color-fe);
+}
+
+.chem.SCN {
+  background: rgba(77, 166, 255, 0.1);
+  border: 1px solid var(--color-scn);
+  color: var(--color-scn);
+}
+
+.chem.FeSCN {
+  background: rgba(255, 51, 68, 0.1);
+  border: 1px solid var(--color-fescn);
+  color: var(--color-fescn);
+  font-size: 16px;
+}
+
+.plus {
+  color: var(--text-muted);
+}
+
+.arrow-line {
+  display: flex;
+  flex-direction: column;
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+  width: 100%;
+  border-top: 1px dashed rgba(255,255,255,0.1);
+  border-bottom: 1px dashed rgba(255,255,255,0.1);
+  padding: 4px 0;
+}
+
+/* 정/역반응 속도 지표 */
+.dynamic-equilibrium-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  position: relative;
+}
+
+.rate-status {
+  text-align: center;
+  flex: 1;
+}
+
+.rate-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.rate-val {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+#vf-val { color: var(--color-fescn); }
+#vr-val { color: var(--color-scn); }
+
+.rate-indicator-glow {
+  width: 2px;
+  height: 30px;
+  background: #a855f7;
+  box-shadow: 0 0 10px #a855f7;
+  transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   대시보드 (Dashboard) 메인 영역
+   ========================================================================== */
+.dashboard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 20px;
+  height: 100%;
+}
+
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-title h2 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.dashboard-title p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* 2단 그리드 콘텐츠 */
+.grid-content {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  min-height: 0; /* 중요: Flexbox 자식이 스크롤되도록 */
+}
+
+.card {
+  flex: 1;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h3 {
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: var(--accent);
+  padding: 4px 10px;
+  font-size: 11px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.badge.stable {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: var(--success);
+}
+
+/* 비커 시뮬레이터 Canvas 영역 */
+.canvas-container {
+  flex: 1;
+  position: relative;
+  margin: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#beaker-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 비커 액체 색상을 렌더링하기 위한 오버레이 */
+.solution-color-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* 클릭 방지 */
+  mix-blend-mode: color; /* 색상 합성 모드 */
+  opacity: 0.1;
+  transition: opacity 1.5s ease, background-color 1.5s ease;
+  background-color: transparent;
+}
+
+/* 조작 컨트롤 셋 */
+.beaker-controls {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-group label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+/* 버튼 공통 스타일 */
+.btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.btn-primary:hover {
+  background: #b56eff;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ff8080;
+}
+
+.btn-danger:hover {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-secondary {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+}
+
+.btn-success {
+  background: var(--success);
+  border-color: transparent;
+  color: white;
+  padding: 12px 24px;
+  font-size: 15px;
+}
+
+.btn-success:hover {
+  background: #34d399;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+}
+
+/* ==========================================================================
+   차트 / 그래프 영역
+   ========================================================================== */
+.graph-container {
+  flex: 1;
+  margin: 16px;
+  position: relative;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#graph-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.fe-dot { background-color: var(--color-fe); box-shadow: 0 0 6px var(--color-fe); }
+.scn-dot { background-color: var(--color-scn); box-shadow: 0 0 6px var(--color-scn); }
+.fescn-dot { background-color: var(--color-fescn); box-shadow: 0 0 6px var(--color-fescn); }
+
+/* 스태츠 보드 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-box {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+#count-fe { color: var(--color-fe); }
+#count-scn { color: var(--color-scn); }
+#count-fescn { color: var(--color-fescn); }
+
+/* ==========================================================================
+   미션 성공 모달 (Modal)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(6, 8, 16, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 100%);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  box-shadow: 0 0 50px rgba(168, 85, 247, 0.25);
+  border-radius: 24px;
+  width: 440px;
+  padding: 40px;
+  text-align: center;
+  transform: scale(0.8);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.active .modal-content {
+  transform: scale(1);
+}
+
+.success-icon-badge {
+  width: 80px;
+  height: 80px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 24px;
+  color: var(--success);
+  font-size: 32px;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.modal-content h2 {
+  font-size: 26px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.modal-content p {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
