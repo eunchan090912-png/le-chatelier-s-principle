@@ -1,285 +1,294 @@
-:root {
-    --bg-primary: #090a0f;
-    --card-bg: rgba(20, 22, 33, 0.6);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --text-primary: #f5f5f7;
-    --text-secondary: #86868b;
-    --accent-color: #0071e3;
+// Henderson-Hasselbalch equation solver
+// pH = 6.1 + log10( [HCO3-] / (0.03 * pCO2) )
+// Normal states: pCO2 = 40 mmHg, [HCO3-] = 24 mEq/L
+// pH = 6.1 + log10( 24 / 1.2 ) = 6.1 + log10(20) = 6.1 + 1.3 = 7.4
+
+let currentPCO2 = 40.0;
+let currentHCO3 = 24.0;
+let currentMetabolicLoad = 0.0; // 추가된 3번째 조절 변수 (단위: mEq/L 변화량)
+let timeData = Array.from({length: 30}, (_, i) => i);
+let phHistory = Array(30).fill(7.4);
+
+// DOM Elements
+const pco2Slider = document.getElementById('pco2-slider');
+const hco3Slider = document.getElementById('hco3-slider');
+const metabolicSlider = document.getElementById('metabolic-slider');
+const pco2Label = document.getElementById('pco2-label');
+const hco3Label = document.getElementById('hco3-label');
+const metabolicLabel = document.getElementById('metabolic-label');
+const phDisplay = document.getElementById('ph-display');
+const statusBadge = document.getElementById('status-badge');
+const statusPanel = document.getElementById('status-panel');
+const arrowLeft = document.getElementById('arrow-left');
+const arrowRight = document.getElementById('arrow-right');
+const eqText = document.getElementById('equilibrium-text');
+
+// Initialize Charts
+const ctxPh = document.getElementById('phChart').getContext('2d');
+const ctxRatio = document.getElementById('ratioChart').getContext('2d');
+
+let phChart = new Chart(ctxPh, {
+    type: 'line',
+    data: {
+        labels: timeData,
+        datasets: [{
+            label: 'pH 수치 추이',
+            data: phHistory,
+            borderColor: '#10b981',
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                min: 6.8,
+                max: 7.8,
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#86868b' }
+            },
+            x: { display: false }
+        }
+    }
+});
+
+let ratioChart = new Chart(ctxRatio, {
+    type: 'bar',
+    data: {
+        labels: ['CO₂ (이산화탄소 - 산성 성분)', 'HCO₃⁻ (탄산수소염 - 염기성 성분)'],
+        datasets: [{
+            data: [1.2, 24.0],
+            backgroundColor: ['#ef4444', '#3b82f6'],
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#86868b' }
+            },
+            x: { ticks: { color: '#f5f5f7' } }
+        }
+    }
+});
+
+// Canvas Particle Animation
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+class Particle {
+    constructor(type) {
+        this.type = type; // 'CO2', 'HCO3', 'H'
+        this.reset();
+    }
+
+    reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 1.5;
+        this.vy = (Math.random() - 0.5) * 1.5;
+        this.radius = this.type === 'H' ? 3 : 6;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        if (this.type === 'CO2') {
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.8)'; // Red CO2
+        } else if (this.type === 'HCO3') {
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.8)'; // Blue HCO3-
+        } else {
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.9)'; // Amber H+
+        }
+        ctx.fill();
+    }
+}
+
+function adjustParticlesCount(targetCO2, targetHCO3, targetH) {
+    const counts = { 'CO2': targetCO2, 'HCO3': targetHCO3, 'H': targetH };
     
-    /* Dynamic status colors */
-    --status-glow: 0 0 20px rgba(16, 185, 129, 0.2);
-    --status-border: rgba(16, 185, 129, 0.4);
-    --status-color: #10b981;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-}
-
-body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow-x: hidden;
-    position: relative;
-    padding: 2rem;
-}
-
-/* Dynamic status background overlay */
-body::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 0;
-    box-shadow: inset 0 0 100px var(--status-glow);
-    transition: box-shadow 0.8s ease;
-}
-
-header {
-    z-index: 1;
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-header h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.5rem;
-}
-
-header p {
-    color: var(--text-secondary);
-    font-size: 1rem;
-}
-
-.app-container {
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-    width: 100%;
-    z-index: 1;
-}
-
-/* Cards & Glassmorphism */
-.glass-panel {
-    background: var(--card-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--card-border);
-    border-radius: 18px;
-    padding: 1.5rem;
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.panel-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1.25rem;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding-bottom: 0.5rem;
-}
-
-/* Patient Status Monitor */
-.status-monitor {
-    border: 1px solid var(--status-border);
-    box-shadow: var(--status-glow);
-    background: rgba(9, 10, 15, 0.8);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    border-radius: 16px;
-    margin-bottom: 1.5rem;
-    transition: all 0.8s ease;
-    text-align: center;
-}
-
-.status-value {
-    font-size: 3rem;
-    font-weight: 800;
-    color: var(--status-color);
-    letter-spacing: -1px;
-    line-height: 1;
-    margin-bottom: 0.25rem;
-    transition: color 0.8s ease;
-}
-
-.status-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.status-badge {
-    background: var(--status-border);
-    color: var(--status-color);
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    transition: all 0.8s ease;
-}
-
-/* Sliders */
-.control-group {
-    margin-bottom: 1.5rem;
-}
-
-.control-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.control-value {
-    color: #ffffff;
-    font-weight: 500;
-}
-
-input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-    outline: none;
-    margin-bottom: 0.5rem;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--accent-color);
-    cursor: pointer;
-    transition: transform 0.1s ease;
-    border: 2px solid #ffffff;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-}
-
-/* Preset Buttons */
-.presets-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    padding: 0.6rem 0.8rem;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.25);
-    transform: translateY(-1px);
-}
-
-.btn.active {
-    background: var(--accent-color);
-    border-color: var(--accent-color);
-    color: white;
-}
-
-/* Dashboard Right Column */
-.dashboard-grid {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    gap: 2rem;
-}
-
-.canvas-container {
-    width: 100%;
-    height: 160px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.charts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-/* Equation Viewer */
-.equation-panel {
-    text-align: center;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 14px;
-    padding: 1.25rem;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.equation-display {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #ffffff;
-    margin-bottom: 0.5rem;
-}
-
-.eq-arrow {
-    color: var(--status-color);
-    font-size: 1.5rem;
-    font-weight: bold;
-    transition: all 0.5s ease;
-    display: inline-block;
-}
-
-.eq-desc {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-    .app-container {
-        grid-template-columns: 1fr;
+    for (let type of ['CO2', 'HCO3', 'H']) {
+        let currentCount = particles.filter(p => p.type === type).length;
+        let diff = Math.floor(counts[type]) - currentCount;
+        
+        if (diff > 0) {
+            for (let i = 0; i < diff; i++) particles.push(new Particle(type));
+        } else if (diff < 0) {
+            for (let i = 0; i < Math.abs(diff); i++) {
+                let idx = particles.findIndex(p => p.type === type);
+                if (idx !== -1) particles.splice(idx, 1);
+            }
+        }
     }
-    .charts-grid {
-        grid-template-columns: 1fr;
+}
+
+// Main update logic
+function updateSimulation() {
+    pco2Label.innerText = `${currentPCO2.toFixed(1)} mmHg`;
+    hco3Label.innerText = `${currentHCO3.toFixed(1)} mEq/L`;
+
+    // 3번째 변수 라벨 텍스트 처리
+    if (currentMetabolicLoad > 0) {
+        metabolicLabel.innerText = `산 축적 (+${currentMetabolicLoad.toFixed(1)} mEq/L)`;
+    } else if (currentMetabolicLoad < 0) {
+        metabolicLabel.innerText = `산 유실 (${currentMetabolicLoad.toFixed(1)} mEq/L)`;
+    } else {
+        metabolicLabel.innerText = "정상 (0.0)";
     }
+
+    // 대사성 부하를 완충 작용 계산에 대입
+    // 산성 부하(currentMetabolicLoad > 0)가 증가하면 탄산수소염 완충 물질이 이를 중화하며 소모됨: HCO3_effective = HCO3 - MetabolicLoad
+    const effectiveHCO3 = Math.max(2.0, currentHCO3 - currentMetabolicLoad);
+    const acidVal = 0.03 * currentPCO2;
+    const ph = 6.1 + Math.log10(effectiveHCO3 / acidVal);
+    
+    phDisplay.innerText = ph.toFixed(2);
+
+    // Update trend log array
+    phHistory.push(ph);
+    phHistory.shift();
+    phChart.data.datasets[0].data = phHistory;
+
+    // Dynamic coloring based on pH
+    let status = '정상';
+    let themeColor = '#10b981'; // Green
+    let glow = '0 0 20px rgba(16, 185, 129, 0.2)';
+    let border = 'rgba(16, 185, 129, 0.4)';
+
+    if (ph < 7.35) {
+        status = '산증 (Acidosis)';
+        themeColor = '#ef4444'; // Red
+        glow = '0 0 20px rgba(239, 68, 68, 0.3)';
+        border = 'rgba(239, 68, 68, 0.5)';
+        arrowLeft.innerText = '←'; // Le Chatelier shifts to form CO2 to exhale
+        arrowRight.innerText = '←';
+        eqText.innerText = '수소 이온(H⁺) 또는 젖산 등의 대사성 산이 축적되었습니다. 르샤틀리에 원리에 의해 평형이 왼쪽으로 이동합니다: H⁺가 HCO₃⁻와 결합하여 폐로 배출하기 위해 CO₂를 생성합니다.';
+    } else if (ph > 7.45) {
+        status = '알칼리증 (Alkalosis)';
+        themeColor = '#3b82f6'; // Blue
+        glow = '0 0 20px rgba(59, 130, 246, 0.3)';
+        border = 'rgba(59, 130, 246, 0.5)';
+        arrowLeft.innerText = '→'; // Shift to right to replenish H+
+        arrowRight.innerText = '→';
+        eqText.innerText = '수소 이온(H⁺)이 유실되거나 부족합니다. 르샤틀리에 원리에 의해 평형이 오른쪽으로 이동합니다: 호흡에서 생성된 CO₂가 물과 반응하여 H⁺와 HCO₃⁻를 추가 생성합니다.';
+    } else {
+        arrowLeft.innerText = '⇌';
+        arrowRight.innerText = '⇌';
+        eqText.innerText = '혈액이 현재 정상적인 생리적 평형 상태를 유지하고 있습니다.';
+    }
+
+    // Apply Dynamic UI variables
+    document.documentElement.style.setProperty('--status-color', themeColor);
+    document.documentElement.style.setProperty('--status-glow', glow);
+    document.documentElement.style.setProperty('--status-border', border);
+    phChart.data.datasets[0].borderColor = themeColor;
+    phChart.update('none');
+
+    // Update Ratio Chart
+    ratioChart.data.datasets[0].data = [acidVal, effectiveHCO3];
+    ratioChart.update('none');
+
+    statusBadge.innerText = status;
+
+    // Particle adjusts
+    const hydrogenCount = Math.max(2, Math.min(80, Math.pow(10, 8.5 - ph) * 2));
+    adjustParticlesCount(currentPCO2 * 0.8, effectiveHCO3 * 1.5, hydrogenCount);
+}
+
+// Particle Loop
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+        p.update();
+        p.draw();
+    });
+    requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// Event Listeners
+pco2Slider.addEventListener('input', (e) => {
+    currentPCO2 = parseFloat(e.target.value);
+    deactivateButtons();
+    updateSimulation();
+});
+
+hco3Slider.addEventListener('input', (e) => {
+    currentHCO3 = parseFloat(e.target.value);
+    deactivateButtons();
+    updateSimulation();
+});
+
+metabolicSlider.addEventListener('input', (e) => {
+    currentMetabolicLoad = parseFloat(e.target.value);
+    deactivateButtons();
+    updateSimulation();
+});
+
+// Presets
+const presets = {
+    normal: { pco2: 40, hco3: 24, metabolic: 0 },
+    hyperventilation: { pco2: 20, hco3: 24, metabolic: 0 },
+    obstruction: { pco2: 75, hco3: 24, metabolic: 0 },
+    acidosis: { pco2: 40, hco3: 24, metabolic: 11 } // 정상 염기에서 산 11 mEq/L 투입 상황
+};
+
+function loadPreset(key) {
+    const pre = presets[key];
+    currentPCO2 = pre.pco2;
+    currentHCO3 = pre.hco3;
+    currentMetabolicLoad = pre.metabolic;
+
+    pco2Slider.value = pre.pco2;
+    hco3Slider.value = pre.hco3;
+    metabolicSlider.value = pre.metabolic;
+
+    // Set active button
+    deactivateButtons();
+    const buttons = document.querySelectorAll('.presets-grid .btn');
+    buttons.forEach(btn => {
+        const text = btn.innerText;
+        if(key === 'normal' && text.includes('정상')) btn.classList.add('active');
+        if(key === 'hyperventilation' && text.includes('과호흡')) btn.classList.add('active');
+        if(key === 'obstruction' && text.includes('질식')) btn.classList.add('active');
+        if(key === 'acidosis' && text.includes('케토')) btn.classList.add('active');
+    });
+
+    updateSimulation();
+}
+
+function deactivateButtons() {
+    document.querySelectorAll('.presets-grid .btn').forEach(btn => btn.classList.remove('active'));
+}
+
+// Initial Run
+updateSimulation();
+for (let i = 0; i < 40; i++) {
+    particles.push(new Particle('CO2'));
+    particles.push(new Particle('HCO3'));
 }
