@@ -59,6 +59,19 @@
                         <span>재흡수 증가 (염기 증가)</span>
                     </div>
                 </div>
+
+                <!-- 대사성 산/염기 직접 부하 슬라이더 (추가 변수) -->
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>대사성 산/염기 부하 (젖산 등)</span>
+                        <span id="metabolic-label" class="control-value">정상 (0)</span>
+                    </div>
+                    <input type="range" id="metabolic-slider" min="-10" max="10" step="0.5" value="0">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
+                        <span>산 유실 (구토 등)</span>
+                        <span>산 유입 (젖산 축적 등)</span>
+                    </div>
+                </div>
             </div>
 
             <!-- 임상 프리셋 -->
